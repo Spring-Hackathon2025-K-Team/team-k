@@ -42,4 +42,8 @@ http://localhost:55000
 ├── .env.example         # 環境変数ファイル（.env）を作成する為のサンプルファイル
 ├── docker-compose.yml   # Docker-composeファイル
 └── requirements.txt     # 使用モジュール記述ファイル
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 9e15c4af118070795811a77594348581c2493d04
