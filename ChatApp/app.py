@@ -19,7 +19,7 @@ app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
 
 # 静的ファイルをキャッシュする設定。開発中はコメントアウト推奨。
 # app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 2678400
-# bundle_css_files(app)
+bundle_css_files(app)
 
 
 # ルートページのリダイレクト処理

@@ -1,11 +1,11 @@
-/* 色を使い回しできるように変数にする */
-
-:root {
-  --snow: #ffffff;
-  --carbon: #3e4149;
-  --navy: #4e5b66;
-  --ash_grey: #f0f0f0;
+/* ここから自分で記述したもの */
+:root{
   --navy_blue: #122543;
-  --salmon_pink: #f57978;
-  --middle_pink: #f45554;
+  --blue: #0F4C81;
+  --brown: #D6CDC4;
+  --main-black: #3A3A3A;
+  --sub-black: #828282;
+  --toroku: #888686;
+  --white: #fafafa;
+  --turquoise-blue: #40B7C4;
 }

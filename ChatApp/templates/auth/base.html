@@ -1,18 +1,24 @@
+<!-- ここから自分で記述したもの -->
 <!DOCTYPE html>
-<html lang="en">
+<html lamg="ja">
   <head>
-    <meta charset="UTF-8" />
+    <meta chaeset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- 次の行はモバイルデバイスに対応させるための記述 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {% block title %}{% endblock %}
-    <link rel="icon" href="../static/img/favicon.ico" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='gen/bundled.css') }}">
+    <!-- 次の行はページのファビコンのための記述。アプリロゴを .png 形式で挿入する -->
+    <link rel="icon" href="..static/img/auth.png" />
+    <!-- 次の行は Flask アプリケーションで使用されるテンプレート構文。サンプルアプリのままでいいかは分からないので質問する-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='gen/bundled.css')}}">
+    <!-- 次の３行は Google Fonts から選択してとってきたフォント -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;900&family=M+PLUS+1:wght@200&display=swap" rel="stylesheet">
   </head>
   <body>
+    <!-- divタグが入るのだが、誰かに確認する -->
     {% block body %}{% endblock %}
-    </div>
+   </div>
   </body>
 </html>
