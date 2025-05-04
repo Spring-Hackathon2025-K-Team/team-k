@@ -1,31 +1,30 @@
-/* サインアップ/ログイン画面のCSS */
-テスト
-.auth-wrapper {
+/* ここから自分で記述したもの（レスポンシブデザインは除く） */
+.auth-wrapper{
   width: 100vw;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--navy_blue);
+  background-color: var(--blue);
   font-family: "Abril Fatface", cursive;
   font-family: "League Spartan", sans-serif;
 }
 
 .auth-container {
-  width: 95%;
-  height: 95%;
+  width: 90%;
+  height: 90%;
   margin: auto;
   border-radius: 10px;
   position: absolute;
   display: flex;
   flex-direction: row-reverse;
   gap: 2rem;
-  background-color: var(--snow);
-  border: 3% solid var(--navy_blue);
+  background-color: #fafafa; 
+  border: 3% solid var(--blue);
 }
 
 .auth-form-wrapper {
-  width: 50%;
+  width: 65%;
   flex-grow: 1;
   padding: 1rem 0 1rem 2rem;
   position: relative;
@@ -36,7 +35,9 @@
 }
 
 .auth-main-pic {
-  height: 100%;
+  max-width: 40%;  /* もしくは max-width: 30%; でもOK */
+  object-fit: contain;
+  height: auto;
   border-radius: 0 10px 10px 0 / 0 10px 10px 0;
 }
 
@@ -54,12 +55,17 @@
 .auth-logo > img {
   height: 100%;
   width: auto;
-  border-left: solid 12px var(--navy_blue);
+  border-left: solid 12px var(--blue);
   padding-left: 10px;
 }
 
 .auth-logo > p {
-  display: contents;
+  font-weight: bold;
+  font-size: 18px;
+  padding-left: 10px;
+  border-left: 6px solid #D6CDC4; /* ← 縦棒 */
+  margin-left: 10px;
+  color: var(--main-black); /* 任意 */
 }
 
 .auth-button-container {
@@ -70,15 +76,22 @@
 }
 
 .auth-title {
-  color: var(--navy_blue);
-  margin-bottom: 0;
-  margin: 0;
-  font-weight: 900;
-  font-size: 48px;
-  z-index: 100;
-  margin-bottom: 2rem;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow: hidden;
+  font-size: 40px;
+  margin: 0 0 2rem 0;
+  text-align: center; /* 中央寄せしたい場合 */
 }
 
+.auth-title-signup{
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow: hidden;
+  font-size: 40px;
+  margin-top: 45px;  /* ← 上に余白を追加（数値は好みで調整） */
+  text-align: center; /* 中央寄せしたい場合 */
+}
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -112,23 +125,42 @@
 }
 
 .auth-form input:focus {
-  border: 2px var(--navy_blue) solid;
-  background-color: var(--navy_blue);
-  color: var(--snow);
+  border: 2px var(--sub-black) solid;
+  background-color: #828282;
+  color: #828282;
 }
 
 .auth-form label {
   font-size: 12px;
-  color: var(--navy_blue);
+  color: #828282;
 }
 
-.auth-button {
+.auth-button-login {
+  background-color: #0F4C81;  /* ← 写真の濃い青に近い色 */
+  color: white;
+  border: none;
+  padding: 0.8rem 1rem;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.auth-button-signup {
+  background-color: #D6CDC4;  /* ← 写真の濃い青に近い色 */
+  color: #3A3A3A;
+  border: none;
+  padding: 0.8rem 1rem;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
   width: 100%;
   margin-bottom: 12px;
 }
 
 .switch-auth-mode {
-  color: grey;
+  color: 888686;
   line-height: 28px;
   font-size: 14px;
   border-bottom: solid 2px lightgrey;
@@ -136,7 +168,7 @@
 }
 
 .switch-auth-mode:hover {
-  color: var(--navy_blue);
+  color: var(--blue);
 }
 
 .flashes {
@@ -145,67 +177,4 @@
   text-align: center;
   font-size: 18px;
   color: rgb(198, 8, 8);
-}
-
-/* ========================================================== */
-/* レスポンシブ */
-
-@media screen and (max-width: 639px) {
-  .auth-container {
-    flex-direction: column-reverse;
-    gap: 0;
-  }
-  .auth-form-wrapper {
-    width: 100%;
-    padding: 0;
-  }
-  .auth-form {
-    padding-top: 80px;
-    min-height: 0;
-  }
-  .auth-main-pic {
-    display: none;
-  }
-  .auth-mobile-pic {
-    display: block;
-    height: 25%;
-  }
-  .auth-button {
-    margin-bottom: 0;
-  }
-
-  .auth-form input {
-    line-height: 20px;
-    font-size: 14px;
-  }
-  .auth-form.signup {
-    padding-top: 60px;
-  }
-}
-
-@media only screen and (min-width: 640px) and (max-width: 1023px) {
-  .auth-container {
-    flex-direction: column-reverse;
-    gap: 0;
-  }
-  .auth-form-wrapper {
-    width: 100%;
-    padding: 0;
-  }
-  .auth-form {
-    padding-top: 80px;
-  }
-  .auth-main-pic {
-    display: none;
-  }
-  .auth-mobile-pic {
-    display: block;
-    height: 25%;
-  }
-}
-
-@media screen and (min-width: 1360px) {
-  .auth-container {
-    width: 70%;
-  }
 }

@@ -1,74 +1,76 @@
-{% extends 'auth/base.html' %} {% block title %}
+<!-- ここから自分で記述したもの -->
+{% extends 'auth/base.html' %}
+{% block title %}
 <title>signup</title>
-{% endblock %} {% block body %}
-<div class="auth-wrapper">
-  <div class="auth-container">
-    <img
-      src="{{ url_for('static',filename='img/auth.png') }}"
-      class="auth-main-pic"
-    />
-    <div class="auth-form-wrapper">
-      <div class="auth-logo">
-        <img
-          src="{{ url_for('static',filename='img/plaudern-logo.png') }}"
-          alt="logo"
-        />
-      </div>
-      <form class="auth-form signup" method="post">
-        <h1 class="auth-title">HI THERE!</h1>
-        <div>
-          <label for="signup-name-input">Name</label>
-          <input
-            type="text"
-            placeholder="Name"
-            name="name"
-            id="signup-name-input"
-          />
-        </div>
-        <div>
-          <label for="signup-email-input">Email</label>
-          <input
-            type="text"
-            placeholder="Email"
-            name="email"
-            id="signup-email-input"
-          />
-        </div>
-        <div>
-          <label for="signup-password-input">Password</label>
-          <input
-            type="password"
-            placeholder="Password"
-            name="password"
-            id="signup-password-input"
-          />
-        </div>
-        <div>
-          <label for="signup-password-confirmation-input">
-            Password Confirmation
-          </label>
-          <input
-            type="password"
-            placeholder="Password Confirmation"
-            name="password-confirmation"
-            id="signup-password-confirmation-input"
-          />
-        </div>
-        <div class="auth-button-container">
-          {% with messages = get_flashed_messages() %} {% if messages %}
-          <ul class="flashes">
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-          </ul>
-          {% endif %} {% endwith %}
-          <button class="auth-button pink">SIGN UP</button>
-          <a class="switch-auth-mode" href="{{ url_for('login_view') }}">
-            ログインする
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 {% endblock %}
+{% block body %}
+<div class="auth-wrapper">
+<div class="auth-container">
+ <!-- Flaskで静的ファイルを挿入する -->
+ <img
+   src="{{ url_for('static',filename='img/auth.png') }}"
+   class="auth-main-pic"
+   />
+   <div class="auth-form-wrapper">
+    <div class="auth-logo">
+      <p>株式会社K team</p>
+    </div>
+       <form class="auth-form signup" method="post">
+         <h1 class="auth-title-signup">サインアップする</h1>
+         <h3 class="auth-subtitle">サインアップに必要な情報を入力してください</h3>
+          <div>
+           <label for="signup-name-input">名前</label>
+           <input
+             type="text"
+             placeholder="名前"
+             name="name"
+             id="signup-name-input"
+           />
+          </div>
+          <div>
+           <label for="signup-email-input">メールアドレス</label>
+           <input
+             type="text"
+             placeholder="メールアドレス"
+             name="email"
+             id="signup-email-input"
+           />
+         </div>
+         <div>
+           <label for="signup-password-input">パスワード</label>
+           <input
+             type="password"
+             placeholder="パスワード"
+             name="password"
+             id="signup-password-input"
+           />
+         </div>
+         <div>
+           <label for="signup-password-confirmation-input">確認のため、再度同じパスワードを入力してください</label>
+           <input
+             type="password"
+             placeholder="パスワードを再度入力してください"
+             name="password-confirmation"
+             id="signup-password-confirmation-input"
+           />
+         </div>
+          <div class="auth-button-container">
+           {% with messages = get_flashed_messages() %} {% if messages %}
+           <ul class="flashes">
+             {% for message in messages %}
+             <li>{{ message }}</li>
+             {% endfor %}
+           </ul>
+           {% endif %} {% endwith %}
+           <button class="auth-button-signup">サインアップ</button>
+           <!-- aタグで別のページへのハイパーリンクを作成する -->
+           <a class="switch-auth-mode" href="{{ url_for('login_view') }}">
+             ログインはこちらから
+           </a>
+         </div>
+       </form>
+     </div>
+   </div>
+ </div>
+</div>
+ {% endblock %}
