@@ -68,3 +68,84 @@
   type="text/javascript"
 ></script>
 {% endblock %}
+
+<!-- ここから自分で記述したもの -->
+ {% extends 'base.html' %}
+ {% block title %}
+ <title>ジョブKチャット</title>
+ {% endblock %}
+
+ {% block body %}
+
+ <!-- ページ全体のコンテナを作成 -->
+ <div class="app-container">
+  <!-- サイドバー -->
+   <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>株式会社K team</h2>
+    </div>
+    <div class="channel-list">
+      <ul>
+       <!-- Flask から渡されたchannelリストをループ処理させるための記述。バックエンドへ確認する -->
+       {% for channel in channels %}
+       <li class="channel-item">
+        <!-- channel.name には、DBで指定されているリスト名が入る -->
+        <span>{{ channel.name }}</span>
+         <!-- ゴミ箱でチャンネルを削除するフォーム。action の後にchannel.idが削除される。channel.idの部分は、変数なので選択したチャンネルのidがかっこ内に自動的に裏で反映される -->
+         <form method="POST" action="/channels/{{ channel.id }}/delete" class="delete-form">
+          <!-- submit:フォームのデータをサーバーに送信する送信ボタンとして動作する -->
+          <button type="submit" class="delete-button">
+           <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </form>
+       </li>
+       {% endfor %}
+      </ul>
+      <button id="add-channel-button">+</button>
+    </div>
+    <div class="logout-section">
+      <!-- action のところは、バックエンドと要相談 -->
+      <form method="POST" action="/logout">
+        <button type="submit" class="logout-button">ログアウト</buton>
+      </form>
+   </div>
+   
+  <!-- チャット部分 -->
+   <div class="chat-container">
+    <div class="chat-header">
+      <!-- 今、どのチャンネルを表示しているか -->
+      <h3>{{ current_channel.name }}</h3>
+      <div class="chat-option-chat">
+        <button id="show-chat-button">投稿</button>
+      </div>
+      <div class="chat-option-file">
+        <button id="show-file-button">ファイル</button>
+      </div>
+    </div>
+    <div class="chat-messages">
+      {% for message in messages %}
+      <!-- 自分のメッセージか他人のメッセージかでクラスを変える-->
+      <div class="message" {% if message.uid == uid %}my-message{% else %}other-message{% endif %}>
+        <p class="message-user">{{ message.user_name }}</p>
+        <p class="message-text">{{ message.message }}</p>
+        <p class="message-time">{{ message.timestamp }}</p>
+          {% if message.uid == uid %}
+          <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}/delete">
+            <button type="submit" class="message-delete-button">
+              <ion-icon name="trash-bin-outline"></ion-icon>
+            </button>
+          </form>
+          {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="chat-input">
+      <form method="POST" action="/channels/{{ current_channel.id }}/messages">
+        <!-- フォームを送信する前に必ずメッセージを入力するように required を入れている -->
+        <textarea name="message" placeholder="メッセージを入力してください" required></textarea>
+        <button type="submit">
+          <ion-icon name="paper-plane-outline"></ion-icon>
+        </button>
+      </form>
+    </div>
+{% endblock %}
