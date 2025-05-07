@@ -136,7 +136,7 @@
 }
 
 .auth-button-login {
-  background-color: #0F4C81;  /* ← 写真の濃い青に近い色 */
+  background-color: #0F4C81;  /* ← ボタンのカラー */
   color: white;
   border: none;
   padding: 0.8rem 1rem;
@@ -148,7 +148,7 @@
 }
 
 .auth-button-signup {
-  background-color: #D6CDC4;  /* ← 写真の濃い青に近い色 */
+  background-color: #D6CDC4;  /* ← ボタンのカラー */
   color: #3A3A3A;
   border: none;
   padding: 0.8rem 1rem;
