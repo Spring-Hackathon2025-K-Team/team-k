@@ -102,16 +102,31 @@ def logout():
     return redirect(url_for('login_view'))
 
 
-# チャンネル一覧ページの表示
+# チャンネル一覧ページの表示：変更した
 @app.route('/channels', methods=['GET'])
 def channels_view():
     uid = session.get('uid')
     if uid is None:
         return redirect(url_for('login_view'))
+
+    channels = Channel.get_all()
+    channels.reverse()
+
+    # 最初のチャンネルを選択中チャンネルとして扱う
+    if channels:
+        current_channel = channels[0]
+        messages = Message.get_all(current_channel["id"])
     else:
-        channels = Channel.get_all()
-        channels.reverse()
-        return render_template('channels.html', channels=channels, uid=uid)
+        current_channel = None
+        messages = []
+
+    return render_template(
+        'channels.html',
+        channels=channels,
+        current_channel=current_channel,
+        messages=messages,
+        uid=uid
+    )
 
 
 # チャンネルの作成
