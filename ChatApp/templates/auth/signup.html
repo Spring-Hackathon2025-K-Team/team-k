@@ -6,71 +6,97 @@
 {% block body %}
 <div class="auth-wrapper">
 <div class="auth-container">
- <!-- Flaskで静的ファイルを挿入する -->
- <img
-   src="{{ url_for('static',filename='img/auth.png') }}"
-   class="auth-main-pic"
-   />
-   <div class="auth-form-wrapper">
-    <div class="auth-logo">
-      <p>株式会社K team</p>
-    </div>
-       <form class="auth-form signup" method="post">
-         <h1 class="auth-title-signup">サインアップする</h1>
-         <h3 class="auth-subtitle">サインアップに必要な情報を入力してください</h3>
-          <div>
-           <label for="signup-name-input">名前</label>
-           <input
-             type="text"
-             placeholder="名前"
-             name="name"
-             id="signup-name-input"
-           />
+  <!-- Flaskで静的ファイルを挿入する -->
+  <img
+    src="{{ url_for('static',filename='img/auth.png') }}"
+    class="auth-main-pic"
+    />
+    <div class="auth-form-wrapper">
+      <div class="auth-logo">
+        <p>株式会社K team</p>
+      </div>
+        <form class="auth-form signup" method="post">
+          <h1 class="auth-title-signup">サインアップする</h1>
+          <h3 class="auth-subtitle">サインアップに必要な情報を入力してください</h3>
+            <div>
+            <label for="signup-name-input">名前</label>
+            <input
+              type="text"
+              placeholder="名前"
+              name="name"
+              id="signup-name-input"
+            />
+            </div>
+            <div>
+            <label for="signup-email-input">メールアドレス</label>
+            <input
+              type="text"
+              placeholder="メールアドレス"
+              name="email"
+              id="signup-email-input"
+            />
           </div>
           <div>
-           <label for="signup-email-input">メールアドレス</label>
-           <input
-             type="text"
-             placeholder="メールアドレス"
-             name="email"
-             id="signup-email-input"
-           />
-         </div>
-         <div>
-           <label for="signup-password-input">パスワード</label>
-           <input
-             type="password"
-             placeholder="パスワード"
-             name="password"
-             id="signup-password-input"
-           />
-         </div>
-         <div>
-           <label for="signup-password-confirmation-input">確認のため、再度同じパスワードを入力してください</label>
-           <input
-             type="password"
-             placeholder="パスワードを再度入力してください"
-             name="password-confirmation"
-             id="signup-password-confirmation-input"
-           />
-         </div>
-          <div class="auth-button-container">
-           {% with messages = get_flashed_messages() %} {% if messages %}
-           <ul class="flashes">
-             {% for message in messages %}
-             <li>{{ message }}</li>
-             {% endfor %}
-           </ul>
-           {% endif %} {% endwith %}
-           <button class="auth-button-signup">サインアップ</button>
-           <!-- aタグで別のページへのハイパーリンクを作成する -->
-           <a class="switch-auth-mode" href="{{ url_for('login_view') }}">
-             ログインはこちらから
-           </a>
-         </div>
-       </form>
-     </div>
-   </div>
- </div>
+            <label for="signup-password-input">パスワード</label>
+            <input
+              type="password"
+              placeholder="パスワード"
+              name="password"
+              id="signup-password-input"
+            />
+          </div>
+          <div>
+            <label for="signup-password-confirmation-input">確認のため、再度同じパスワードを入力してください</label>
+            <input
+              type="password"
+              placeholder="パスワードを再度入力してください"
+              name="password-confirmation"
+              id="signup-password-confirmation-input"
+            />
+          </div>
+
+          <div class="form-group admin-section">
+            <div class="checkbox-container">
+              <input type="checkbox" id="is_admin" name="is_admin">
+              <label for="is_admin">管理者として登録</label>
+            </div>
+            
+            <div class="admin-secret-section" id="admin-secret-section" style="display: none;">
+              <label for="admin_secret">※管理者コードを入力してください</label>
+              <input type="password" id="admin_secret" name="admin_secret">
+            </div>
+          </div>
+          
+            <div class="auth-button-container">
+            {% with messages = get_flashed_messages() %} {% if messages %}
+            <ul class="flashes">
+              {% for message in messages %}
+              <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %} {% endwith %}
+            <button class="auth-button-signup">サインアップ</button>
+            <!-- aタグで別のページへのハイパーリンクを作成する -->
+            <a class="switch-auth-mode" href="{{ url_for('login_view') }}">
+              ログインはこちらから
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
- {% endblock %}
+
+<script>
+  // 管理者チェックボックスの表示/非表示を切り替える
+  document.getElementById('is_admin').addEventListener('change', function() {
+    var secretSection = document.getElementById('admin-secret-section');
+    if (this.checked) {
+      secretSection.style.display = 'block';
+    } else {
+      secretSection.style.display = 'none';
+      document.getElementById('admin_secret').value = '';
+    }
+  });
+</script>
+  {% endblock %}

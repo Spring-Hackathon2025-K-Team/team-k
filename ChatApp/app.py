@@ -44,7 +44,18 @@ def signup_process():
     email = request.form.get('email')
     password = request.form.get('password')
     passwordConfirmation = request.form.get('password-confirmation')
-
+    
+    # デフォルトでは管理者ではない
+    is_admin = False
+    
+    # 管理者用のシークレットコードを取得
+    admin_secret = request.form.get('admin_secret', '')
+    
+    # シークレットコードが正しい場合のみ管理者になる
+    ADMIN_SECRET = "Admin"
+    if admin_secret == ADMIN_SECRET:
+        is_admin = True
+    
     if name == '' or email =='' or password == '' or passwordConfirmation == '':
         flash('空のフォームがあるようです')
     elif password != passwordConfirmation:
@@ -59,7 +70,7 @@ def signup_process():
         if registered_user != None:
             flash('既に登録されているようです')
         else:
-            User.create(uid, name, email, password)
+            User.create(uid, name, email, password, is_admin)  # ユーザーを作成
             UserId = str(uid)
             session['uid'] = UserId
             return redirect(url_for('channels_view'))
@@ -101,47 +112,63 @@ def logout():
     return redirect(url_for('login_view'))
 
 
-# チャンネル一覧ページの表示：変更した
+# 1.adminかどうか判定する関数
+    if user["role"] == "admin":
+    
+    
+# 2.adminだったら
+#     1.登録してあるチャンネル全て取得
+#     2.一番新しく作成されたチャンネルのメッセージを取得
+#     3.そのチャンネルのメッセージを表示する
+
+
+# 3.ユーザーだったら
+#     1.所属しているチャンネル
+#     2.そのチャンネルのメッセージを取得する
+#     3.そのチャンネルのメッセージを表示する
+
+
+# チャンネル一覧ページの表示
 @app.route('/channels', methods=['GET'])
 def channels_view():
-    uid = session.get('uid')
-    if uid is None:
-        return redirect(url_for('login_view'))
+    uid = session.get('uid') # セッションからユーザーIDを取得
+    
+    if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
+        return redirect(url_for('login_view'))  
+    else: # セッションにユーザーIDが保存されている場合、チャンネル一覧ページを表示
 
-    channels = Channel.get_all()
-    channels.reverse()
+        currnt_channels = Channel.get_all() # 全チャンネルを取得
+        currnt_channels.reverse() # チャンネルを新しい順に並べ替え
+        return render_template('channels.html', currnt_channels=currnt_channels, uid=uid) # チャンネル一覧ページを表示
 
-    # 最初のチャンネルを選択中チャンネルとして扱う
-    if channels:
-        current_channel = channels[0]
-        messages = Message.get_all(current_channel["id"])
-    else:
-        current_channel = None
-        messages = []
 
-    return render_template(
-        'channels.html',
-        channels=channels,
-        current_channel=current_channel,
-        messages=messages,
-        uid=uid
-    )
+# # チャンネル一覧ページの表示
+# @app.route('/channels', methods=['GET'])
+# def channels_view():
+#     uid = session.get('uid')
+#     if uid is None:
+#         return redirect(url_for('login_view'))
+#     else:
+#         channels = Channel.get_all()
+#         channels.reverse()
+#         return render_template('channels.html', channels=channels, uid=uid)
 
 
 # チャンネルの作成
 @app.route('/channels', methods=['POST'])
 def create_channel():
-    uid = session.get('uid')
-    if uid is None:
-        return redirect(url_for('login_view'))
+    uid = session.get('uid') # セッションからユーザーIDを取得
 
-    channel_name = request.form.get('channelTitle')
-    channel = Channel.find_by_name(channel_name)
-    if channel == None:
-        channel_description = request.form.get('channelDescription')
-        Channel.create(uid, channel_name, channel_description)
-        return redirect(url_for('channels_view'))
-    else:
+    if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
+        return redirect(url_for('login_view'))
+    
+    channel_name = request.form.get('channelTitle') # フォームからチャンネル名を取得
+    channel = Channel.find_by_name(channel_name)    # チャンネル名からチャンネルを取得
+    if channel == None:     # チャンネルが存在しない場合
+        channel_description = request.form.get('channelDescription') # フォームからチャンネル説明を取得
+        Channel.create(uid, channel_name, channel_description)  # チャンネルを作成
+        return redirect(url_for('channels_view'))   # チャンネル一覧ページにリダイレクト        
+    else: # チャンネルが存在する場合、エラーメッセージを表示
         error = '既に同じ名前のチャンネルが存在しています'
         return render_template('error/error.html', error_message=error)
 
@@ -163,30 +190,30 @@ def update_channel(cid):
 # チャンネルの削除
 @app.route('/channels/delete/<cid>', methods=['POST'])
 def delete_channel(cid):
-    uid = session.get('uid')
-    if uid is None:
+    uid = session.get('uid')    # セッションからユーザーIDを取得
+    if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
 
-    channel = Channel.find_by_cid(cid)
+    channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
 
-    if channel["uid"] != uid:
-        flash('チャンネルは作成者のみ削除可能です')
+    if channel["uid"] != uid:   # チャンネルの作成者と現在のユーザーが異なる場合
+        flash('チャンネルは作成者のみ削除可能です') # エラーメッセージを表示
     else:
-        Channel.delete(cid)
+        Channel.delete(cid) # チャンネルを削除
     return redirect(url_for('channels_view'))
 
 
 # チャンネル詳細ページの表示（各チャンネル内で、そのチャンネルに属している全メッセージを表示させる）
 @app.route('/channels/<cid>/messages', methods=['GET'])
 def detail(cid):
-    uid = session.get('uid')
-    if uid is None:
+    uid = session.get('uid')  # セッションからユーザーIDを取得
+    if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
 
-    channel = Channel.find_by_cid(cid)
-    messages = Message.get_all(cid)
+    current_channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
+    messages = Message.get_all(cid) # チャンネルIDから全メッセージを取得
 
-    return render_template('messages.html', messages=messages, channel=channel, uid=uid)
+    return render_template('messages.html', messages=messages, current_channel=current_channel, uid=uid) # チャンネル詳細ページを表示
 
 
 # メッセージの投稿
