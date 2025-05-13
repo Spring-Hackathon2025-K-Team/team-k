@@ -1,87 +1,89 @@
-{% extends 'base.html' %}
-
-{% block title %}
-<title>ジョブKチャット</title>
-{% endblock %}
-
-{% block body %}
-<!-- ページ全体のコンテナを作成 -->
-<div class="app-container">
-  <!-- サイドバー -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>株式会社K team</h2>
-    </div>
-    <div class="channel-list">
-      <ul>
-        <!-- Flask から渡されたchannelリストをループ処理させるための記述 -->
-        {% for channel in channels %}
-        <li class="channel-item">
-          <!-- channel.name には、DBで指定されているリスト名が入る -->
-          <span>{{ channel.name }}</span>
-          <!-- ゴミ箱でチャンネルを削除するフォーム -->
-          <form method="POST" action="/channels/{{ channel.id }}/delete" class="delete-form">
-            <button type="submit" class="delete-button">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
-          </form>
-        </li>
-        {% endfor %}
-      </ul>
-      <button id="add-channel-button">+</button>
-    </div>
-    <div class="logout-section">
-      <form method="POST" action="/logout">
-        <button type="submit" class="logout-button">ログアウト</button>
-      </form>
-    </div>
-  </div>
-  
-  <!-- チャット部分 -->
-  <div class="chat-container">
-    <div class="chat-header">
-      <!-- 今、どのチャンネルを表示しているか -->
-      <h3>{{ current_channel.name }}</h3>
-      <div class="chat-option-chat">
-        <button id="show-chat-button">投稿</button>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>サイドバーのレイアウト確認</title>
+  <link rel="stylesheet" href="sidebar.css" />
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+</head>
+<body>
+  <!-- 全体のレイアウト -->
+  <div class="layout-container">
+    <!-- サイドバー -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>株式会社K team</h2>
+        <div class="channel-name">
+          <span>チャンネル一覧</span>
+          <button id="add-channel-button">+</button>
+          <hr>
+        </div>
       </div>
-      <div class="chat-option-file">
-        <button id="show-file-button">ファイル</button>
+      <div class="channel-list">
+        <ul>
+          <li class="channel-item">
+            <span>26卒採用連絡グループ</span>
+            <form class="delete-form">
+              <button class="delete-button">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </form>
+          </li>
+          <li class="channel-item">
+            <span>25卒採用連絡グループ</span>
+            <form class="delete-form">
+              <button class="delete-button">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
+      <div class="logout-section">
+        <form>
+          <button class="logout-button">ログアウト</button>
+        </form>
       </div>
     </div>
-    
-    <div class="chat-messages">
-      {% for message in messages %}
-      <!-- 自分のメッセージか他人のメッセージかでクラスを変える -->
+
+    <!-- チャット部分 -->
+    <div class="chat-container">
+      <div class="chat-header">
+        <h3>{{ current_channel.name }}</h3>
+        <div class="chat-option-chat">
+          <button id="show-chat-button">投稿</button>
+        </div>
+        <div class="chat-option-file">
+          <button id="show-file-button">ファイル</button>
+        </div>
+      </div>
+      <div class="chat-messages">
+        {% for message in messages %}
+      <!-- 自分のメッセージか他人のメッセージかでクラスを変える-->
       <div class="message {% if message.uid == uid %}my-message{% else %}other-message{% endif %}">
         <p class="message-user">{{ message.user_name }}</p>
         <p class="message-text">{{ message.message }}</p>
         <p class="message-time">{{ message.timestamp }}</p>
-        {% if message.uid == uid %}
-        <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}/delete">
-          <button type="submit" class="message-delete-button">
-            <ion-icon name="trash-bin-outline"></ion-icon>
+          {% if message.uid == uid %}
+          <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}/delete">
+            <button type="submit" class="message-delete-button">
+              <ion-icon name="trash-bin-outline"></ion-icon>
+            </button>
+          </form>
+          {% endif %}
+      </div>
+      <div class="chat-input">
+         <form method="POST" action="/channels/{{ current_channel.id }}/messages">
+          <textarea name="message" placeholder="メッセージを入力してください" required></textarea>
+          <button type="submit">
+            <ion-icon name="paper-plane-outline"></ion-icon>
           </button>
         </form>
-        {% endif %}
       </div>
-      {% endfor %}
-    </div>
-    
-    <div class="chat-input">
-      <form method="POST" action="/channels/{{ current_channel.id }}/messages">
-        <!-- フォームを送信する前に必ずメッセージを入力するように required を入れている -->
-        <textarea name="message" placeholder="メッセージを入力してください" required></textarea>
-        <button type="submit">
-          <ion-icon name="paper-plane-outline"></ion-icon>
-        </button>
-      </form>
     </div>
   </div>
-</div>
-
-{% include 'modal/update-channel.html' %}
-
+</body>
+</html>
 {% endblock %}
 
 {% block script %}

@@ -71,8 +71,8 @@ def signup_process():
             flash('既に登録されているようです')
         else:
             User.create(uid, name, email, password, is_admin)  # ユーザーを作成
-            UserId = str(uid)
-            session['uid'] = UserId
+            UserId = str(uid)   # ユーザーIDを文字列に変換
+            session['uid'] = UserId # セッションにユーザーIDを保存
             return redirect(url_for('channels_view'))
     return redirect(url_for('signup_process'))
 
@@ -96,12 +96,12 @@ def login_process():
         if user is None:
             flash('このユーザーは存在しません')
         else:
-            hashPassword = hashlib.sha256(password.encode('utf-8')).hexdigest()
-            if hashPassword != user["password"]:
+            hashPassword = hashlib.sha256(password.encode('utf-8')).hexdigest() # パスワードをハッシュ化
+            if hashPassword != user["password"]:  # ハッシュ化したパスワードとDBのパスワードを比較
                 flash('パスワードが間違っています！')
             else:
-                session['uid'] = user["uid"]
-                return redirect(url_for('channels_view'))
+                session['uid'] = user["uid"]    # セッションにユーザーIDを保存
+                return redirect(url_for('channels_view'))   # チャンネル一覧ページにリダイレクト
     return redirect(url_for('login_view'))
 
 
@@ -112,46 +112,42 @@ def logout():
     return redirect(url_for('login_view'))
 
 
-# 1.adminかどうか判定する関数
-    if user["role"] == "admin":
-    
-    
-# 2.adminだったら
-#     1.登録してあるチャンネル全て取得
-#     2.一番新しく作成されたチャンネルのメッセージを取得
-#     3.そのチャンネルのメッセージを表示する
+# 1.管理者かどうか判定する関数
+def is_admin(uid):  
+    user = User.find_by_uid(uid)  # クラスモデルからユーザーIDを取得
+    if user is None:
+        return False  # セッションにユーザーIDが保存されていない場合、adminではない
+    return user.get('role') == 'admin'  # ユーザーの役割がadminかどうかを判定
 
-
-# 3.ユーザーだったら
-#     1.所属しているチャンネル
-#     2.そのチャンネルのメッセージを取得する
-#     3.そのチャンネルのメッセージを表示する
+# 管理者かユーザーかで利用可能なチャンネルを取得する関数
+def get_available_channels(uid):  
+    if is_admin(uid):  # 管理者の場合
+        return Channel.get_all()  # 全チャンネルを取得
+    else:  # ユーザーの場合
+        return Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
 
 
 # チャンネル一覧ページの表示
 @app.route('/channels', methods=['GET'])
 def channels_view():
-    uid = session.get('uid') # セッションからユーザーIDを取得
-    
-    if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
-        return redirect(url_for('login_view'))  
-    else: # セッションにユーザーIDが保存されている場合、チャンネル一覧ページを表示
-
-        currnt_channels = Channel.get_all() # 全チャンネルを取得
-        currnt_channels.reverse() # チャンネルを新しい順に並べ替え
-        return render_template('channels.html', currnt_channels=currnt_channels, uid=uid) # チャンネル一覧ページを表示
-
-
-# # チャンネル一覧ページの表示
-# @app.route('/channels', methods=['GET'])
-# def channels_view():
-#     uid = session.get('uid')
-#     if uid is None:
-#         return redirect(url_for('login_view'))
-#     else:
-#         channels = Channel.get_all()
-#         channels.reverse()
-#         return render_template('channels.html', channels=channels, uid=uid)
+    uid = session.get('uid')    # セッションからユーザーIDを取得
+    if uid is None:  # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
+        return redirect(url_for('login_view'))
+    else:
+        admin_status = is_admin(uid)  # 管理者かどうかを判定
+        
+        if admin_status:
+            channels = Channel.get_all()    # 全チャンネルを取得
+            channels.reverse() 
+        else:
+            channels = Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
+                
+        return render_template(
+            'channels.html', 
+            current_channel=channels,    # 利用可能なチャンネルを表示するためにフロントに渡す
+            uid=uid,
+            admin_status=admin_status # 管理者かどうかの情報を渡す
+        )
 
 
 # チャンネルの作成
@@ -162,11 +158,11 @@ def create_channel():
     if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
     
-    channel_name = request.form.get('channelTitle') # フォームからチャンネル名を取得
-    channel = Channel.find_by_name(channel_name)    # チャンネル名からチャンネルを取得
-    if channel == None:     # チャンネルが存在しない場合
-        channel_description = request.form.get('channelDescription') # フォームからチャンネル説明を取得
-        Channel.create(uid, channel_name, channel_description)  # チャンネルを作成
+    new_channel_name = request.form.get('channelTitle') # フォームからチャンネル名を取得
+    channel = Channel.find_by_name(new_channel_name)    # データベースにあるチャンネル名からチャンネルを取得
+    if channel is None:     # チャンネルが存在しない場合
+        new_channel_description = request.form.get('channelDescription') # フォームからチャンネル説明を取得
+        Channel.create(uid, new_channel_name, new_channel_description)  # チャンネルを作成
         return redirect(url_for('channels_view'))   # チャンネル一覧ページにリダイレクト        
     else: # チャンネルが存在する場合、エラーメッセージを表示
         error = '既に同じ名前のチャンネルが存在しています'
@@ -187,7 +183,7 @@ def update_channel(cid):
     return redirect(f'/channels/{cid}/messages')
 
 
-# チャンネルの削除
+# チャンネルの削除 - 管理者と作成者のみ削除可能
 @app.route('/channels/delete/<cid>', methods=['POST'])
 def delete_channel(cid):
     uid = session.get('uid')    # セッションからユーザーIDを取得
@@ -195,25 +191,36 @@ def delete_channel(cid):
         return redirect(url_for('login_view'))
 
     channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
+    admin_status = is_admin(uid)  # 管理者かどうかを判定
 
-    if channel["uid"] != uid:   # チャンネルの作成者と現在のユーザーが異なる場合
-        flash('チャンネルは作成者のみ削除可能です') # エラーメッセージを表示
+    # 管理者か、チャンネルの作成者のみ削除可能
+    if not admin_status and channel["uid"] != uid:   
+        flash('チャンネルは作成者または管理者のみ削除可能です')
     else:
         Channel.delete(cid) # チャンネルを削除
     return redirect(url_for('channels_view'))
 
 
-# チャンネル詳細ページの表示（各チャンネル内で、そのチャンネルに属している全メッセージを表示させる）
+
+# チャンネル詳細ページの表示
 @app.route('/channels/<cid>/messages', methods=['GET'])
 def detail(cid):
     uid = session.get('uid')  # セッションからユーザーIDを取得
     if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
 
+    admin_status = is_admin(uid)  # 管理者かどうかを判定
     current_channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
     messages = Message.get_all(cid) # チャンネルIDから全メッセージを取得
 
-    return render_template('messages.html', messages=messages, current_channel=current_channel, uid=uid) # チャンネル詳細ページを表示
+    # フロントに渡す
+    return render_template(
+        'messages.html', 
+        messages=messages, 
+        current_channel=current_channel, 
+        uid=uid,
+        is_admin=admin_status  # 管理者かどうかの情報を追加
+    )
 
 
 # メッセージの投稿

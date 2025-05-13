@@ -1,118 +1,260 @@
-/* 640px以上で表示されるサイドバーのCSS */
-
-.navigation {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 100;
+.layout-container {
+  display: flex;
   height: 100vh;
-  width: 50px;
-  background-color: var(--snow);
-  overflow-x: hidden;
-  box-shadow: 10px 0 0 var(--salmon_pink);
-  transition: all 0.5s;
 }
 
-#navigation-logo-container {
-  width: 100%;
-  position: relative;
-}
-
-#navigation-logo {
-  position: absolute;
-  top: 24px;
-  right: 4px;
-}
-
-.navigation:hover {
-  width: 300px;
-}
-
-.navigation ul {
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: #e6ded5;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  padding-top: 40vh;
-  padding-left: 0px;
+  padding: 1rem;
+  box-sizing: border-box;
+  border-right: 1px solid #ccc;
 }
 
-.navigation ul li {
-  list-style: none;
-  display: block;
-  position: relative;
-  width: 100%;
+.sidebar-header h2 {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 2em;
+  border-left: solid 6px #D6CDC4;
 }
 
-.navigation ul li:hover {
-  background-color: #20272c5e;
+.sidebar-header {
+  margin-bottom: 0;  /* 必要に応じて */
+  padding-bottom: 0.5rem;  /* 少しだけスペース確保 */
 }
 
-.navigation ul li.active {
-  background-color: var(--salmon_pink);
-}
-.navigation ul li.active > a {
-  color: var(--snow);
-}
-
-.navigation ul li a {
-  display: block;
-  text-decoration: none;
-  color: var(--navy_blue);
-  font-weight: 800;
-  width: 100%;
+.channel-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  font-weight: bold;
+  color: #333;
 }
 
-.navigation ul li.active a::before {
-  content: "";
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  top: -30px;
-  right: 0;
-  border-radius: 50%;
-  box-shadow: 15px 15px 0 var(--salmon_pink);
-}
-.navigation ul li.active a::after {
-  content: "";
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  top: 60px;
-  right: 0;
-  border-radius: 50%;
-  box-shadow: 15px -15px 0 var(--salmon_pink);
+.channel-name {
+  margin-top: 0.5rem;
 }
 
-.navigation ul li a .icon {
-  display: block;
-  min-width: 45px;
-  height: 60px;
-  line-height: 70px;
+.channel-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.channel-list {
+  margin-top: 0;  /* 必要なら追加 */
+}
+
+.channel-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0.3rem;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.channel-item:hover {
+  background-color: #ddd3c9;
+}
+
+.channel-item span {
+  font-size: 0.95rem;
+}
+
+.channel-divider {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 0 12px 10px 12px;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.add-channel-button {
+  background-color: none;
+  border: none;
+  padding: 0;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+
+.add-channel-button:hover {
+  background-color: #a59c93;
+}
+
+.logout-section {
   text-align: center;
+  margin-top: 30rem;;
+  margin-bottom: 2rem;
 }
 
-.navigation ul li a .icon ion-icon {
-  font-size: 1.5em;
+.logout-button {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  background-color: white;
+  border: 2px solid black;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.navigation ul li a .title {
-  padding-left: 10px;
+.logout-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* チャット全体のコンテナ */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100vh;
+  background-color: #ffffff;
+  border-left: 1px solid #ccc;
+}
+
+/* チャットヘッダー */
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #0a4270;
+  color: #ffffff;
+  padding: 10px 20px;
+  font-weight: bold;
+}
+
+.chat-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+}
+
+/* ヘッダー内のボタン（投稿・ファイル） */
+.chat-option-chat button,
+.chat-option-file button {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 14px;
+  margin-left: 30px;
+  margin-top: 3rem;
+  cursor: pointer;
+}
+
+.chat-option-chat button:hover,
+.chat-option-file button:hover {
+  text-decoration: underline;
+}
+
+/* メッセージエリア */
+.chat-messages {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+}
+
+/* メッセージ共通 */
+.message {
+  max-width: 60%;
+  margin-bottom: 20px;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  position: relative;
+}
+
+/* 自分のメッセージ */
+.my-message {
+  margin-left: auto;
+  background-color: #e1f5fe;
+}
+
+/* 他人のメッセージ */
+.other-message {
+  margin-right: auto;
+  background-color: #ffffff;
+}
+
+/* メッセージ内のユーザー名、テキスト、時間 */
+.message-user {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.message-text {
+  margin: 0;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #777;
+  text-align: right;
+}
+
+/* 削除ボタン */
+.message-delete-button {
+  background: none;
+  border: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  color: #888;
+}
+
+.message-delete-button:hover {
+  color: #d00;
+}
+
+/* メッセージ入力欄 */
+.chat-input {
+  padding: 10px 20px;
+  border-top: 1px solid #ccc;
+  background-color: #fff;
+  margin-bottom: 2rem;
+}
+
+.chat-input form {
+  display: flex;
+  align-items: center;
+}
+
+.chat-input textarea {
+  flex: 1;
   height: 60px;
-  line-height: 60px;
-  white-space: nowrap;
+  resize: none;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
 }
 
-/* ========================================================== */
-/* レスポンシブ */
-
-@media screen and (max-width: 639px) {
-  .navigation {
-    display: none;
-  }
-
-  .main-container {
-    padding-left: 0;
-  }
+.chat-input button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  margin-left: 10px;
+  cursor: pointer;
+  color: #0a4270;
 }
 
+.chat-input button:hover {
+  color: #003c6c;
+}
