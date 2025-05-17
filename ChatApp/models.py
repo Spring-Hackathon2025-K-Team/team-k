@@ -58,11 +58,11 @@ class User:
                 if user_data:
                     # 取得したデータを辞書形式で返す
                     return {
-                        "uid": user_data[0],
-                        "name": user_data[1],
-                        "email": user_data[2],
-                        "password": user_data[3],
-                        "role": user_data[4]  # 'user' または 'admin'
+                        "uid": user_data["uid"],
+                        "name": user_data["user_name"],
+                        "email": user_data["email"],
+                        "password": user_data["password"],
+                        "role": user_data["role"]
                     }
                 return None
         except pymysql.Error as e:
