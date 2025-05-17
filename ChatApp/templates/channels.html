@@ -29,12 +29,14 @@
        <ul class="list-unstyled">
        {% for channel in channels %}
         <li class="d-flex justify-content-between align-items-center mb-2">
-         <span>{{ channel.name }}</span>
-         <form method="POST" action="/channels/{{ channel.id }}/delete">
-         <button class="btn btn-sm btn-outline-secondary">
-         <ion-icon name="trash-outline"></ion-icon>
-         </button>
-         </form>
+          <span>{{ channel.name }}</span> 
+        {% if admin_status or channel.uid == uid%}
+          <form method="POST" action="/channels/{{ channel.id }}/delete">
+          <button class="btn btn-sm btn-outline-secondary">
+          <ion-icon name="trash-outline"></ion-icon>
+          </button>
+          </form>
+        {% endif %}
         </li>
       {% endfor %}
       </ul>

@@ -138,13 +138,13 @@ def channels_view():
         
         if admin_status:
             channels = Channel.get_all()    # 全チャンネルを取得
-            channels = Channel.query.order_by(Channel.created_at.desc()).all()
+            
         else:
             channels = Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
                 
         return render_template(
             'channels.html', 
-            current_channel=channels,    # 利用可能なチャンネルを表示するためにフロントに渡す
+            channels=channels,    # 利用可能なチャンネルを表示するためにフロントに渡す
             uid=uid,
             admin_status=admin_status # 管理者かどうかの情報を渡す
         )
@@ -184,7 +184,7 @@ def update_channel(cid):
 
 
 # チャンネルの削除 - 管理者と作成者のみ削除可能
-@app.route('/channels/delete/<cid>', methods=['POST'])
+@app.route('/channels/<int:cid>/delete/', methods=['POST'])
 def delete_channel(cid):
     uid = session.get('uid')    # セッションからユーザーIDを取得
     if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
@@ -261,3 +261,56 @@ def internal_server_error(error):
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
+    
+    
+    
+入力と出力を定義
+入力＝@app.route('/channels/<cid>/messages/<message_id>', methods=['GET'])
+フロントへの変数＝チャンネルIDにもとづく全てのメッセージの取得
+
+
+
+
+
+出力＝
+    return render_template(
+        'channels.html', 
+        messages=messages, 
+        current_channel=current_channel, 
+        uid=uid,
+        is_admin=admin_status  # 管理者かどうかの情報を追加
+    )
+    
+## サーバー
+def チャンネルとそれに紐づくメッセージを返す関数:
+    
+    チャンネル一覧 = slect * from channnels;
+    for チャンネル in チャンネル一覧:
+        チャンネルに紐づくメッセージ = select messages where channel = チャンネル;
+
+    return {
+        チャンネル: [チャンネルに紐づくメッセージ],
+        channel1: [message1, message2, message3],
+        channel2: [message2-1, message2-2, message2-3],
+        channel3: [message3-1, message3-2, message3-3]
+    }
+
+## フロントエンド
+channelAndMessages = {
+    channel1: [message1, message2, message3]
+    channel2: [message2-1, message2-2, message2-3]
+    channel3: [message3-1, message3-2, message3-3]
+}
+変数 = XXXX
+
+if 変数 = channel1:
+    for message in messages
+        channelAndMessages[channel1][message]
+
+if 変数 = channel2:
+    for message in messages
+        channelAndMessages[channel2][message]
+
+if 変数 = channel3:
+    for message in messages
+        channelAndMessages[channel3][message]
