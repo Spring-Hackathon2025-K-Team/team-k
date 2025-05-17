@@ -178,3 +178,13 @@
   font-size: 18px;
   color: rgb(198, 8, 8);
 }
+
+/* 登録ボタンをカスタマイズ */
+.btn-info {
+  background-color: #41B3C5;
+  font-weight: bold;
+  border: none;
+}
+.btn-info:hover {
+  background-color: #369fb1;
+}
