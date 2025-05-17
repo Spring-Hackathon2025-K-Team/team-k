@@ -1,52 +1,148 @@
-{% extends 'base.html' %} {% block title %}
-<title>home</title>
-{% endblock %} {% block body %}
-<div class="main-container">
-  <div class="channel-title">
-    <h1>CHANNELS</h1>
-    <p class="channel-title-text">CHANNELS</p>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>サイドバーのレイアウト確認</title>
+  <link rel="stylesheet" href="sidebar.css" />
+  <!-- Ionicons for trash icons -->
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+  <!-- 全体のレイアウト -->
+  <div class="layout-container d-flex">
+    <!-- サイドバー -->
+    <div class="sidebar bg-light p-3" style="width: 260px;">
+      <div class="sidebar-header mb-3">
+        <h4 class="fw-bold">株式会社K team</h4>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">チャンネル一覧</span>
+          <!-- モーダルを開くボタン -->
+          <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#channelModal">＋</button>
+        </div>
+        <hr>
+      </div>
+      <div class="channel-list">
+       <ul class="list-unstyled">
+       {% for channel in channels %}
+        <li class="d-flex justify-content-between align-items-center mb-2">
+         <span>{{ channel.name }}</span>
+         <form method="POST" action="/channels/{{ channel.id }}/delete">
+         <button class="btn btn-sm btn-outline-secondary">
+         <ion-icon name="trash-outline"></ion-icon>
+         </button>
+         </form>
+        </li>
+      {% endfor %}
+      </ul>
+      </div>
+      <div class="logout-section mt-auto">
+        <form>
+          <button class="btn btn-outline-dark w-100">ログアウト</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- チャット部分 -->
+    <div class="chat-container flex-grow-1 p-3">
+      <div class="chat-header d-flex align-items-center justify-content-between mb-3">
+        <h3>{{ current_channel.name }}</h3>
+        <div>
+          <button id="show-chat-button" class="btn btn-outline-primary me-2">投稿</button>
+          <button id="show-file-button" class="btn btn-outline-primary">ファイル</button>
+        </div>
+      </div>
+      <div class="chat-messages">
+        {% for message in messages %}
+        <div class="message {% if message.uid == uid %}my-message{% else %}other-message{% endif %}">
+          <p class="message-user">{{ message.user_name }}</p>
+          <p class="message-text">{{ message.message }}</p>
+          <p class="message-time">{{ message.timestamp }}</p>
+          {% if message.uid == uid %}
+          <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}/delete">
+            <button type="submit" class="message-delete-button">
+              <ion-icon name="trash-bin-outline"></ion-icon>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="chat-input mt-3">
+        <form method="POST" action="/channels/{{ current_channel.id }}/messages">
+          <div class="d-flex">
+            <textarea name="message" class="form-control me-2" placeholder="メッセージを入力してください" required></textarea>
+            <button type="submit" class="btn btn-primary">
+              <ion-icon name="paper-plane-outline"></ion-icon>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
-  <div id="channels-list">
-    <div id="pagination-wrapper">
-      <div>
-        <div class="pagination-container">
-          <p id="prev">
-            <
-            <span>PREV</span>
-          </p>
-          <ul class="pagination"></ul>
-          <p id="next">
-            <span>NEXT</span>
-            >
-          </p>
+
+  <!-- モーダル：チャンネル作成 -->
+  <div class="modal fade" id="createChannelModal" tabindex="-1" aria-labelledby="createChannelLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border: 8px solid #084C84;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createChannelLabel">チャンネルを作成する</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-body">
+         <form method="POST" action="/channels/create">
+          <div class="mb-3">
+           <label for="channelName" class="form-label">チャンネル名</label>
+           <input type="text" class="form-control" id="channelName" name="name" required>
+          </div>
+          <div class="mb-3">
+           <label for="channelDescription" class="form-label">チャンネルの説明</label>
+           <input type="text" class="form-control" id="channelDescription" name="description">
+          </div>
+          <div class="text-center">
+           <button type="submit" class="btn btn-info text-white">登録</button>
+          </div>
+        </form>
         </div>
       </div>
     </div>
-    <ul class="channel-box"></ul>
   </div>
-  <div id="footer">
-    <p id="footer-text">PLAUDERN FROM RARETECH</p>
-  </div>
-  {% include 'modal/create-channel.html' %} {% include
-  'modal/delete-channel.html' %}
-</div>
-{% endblock %} {% block script %}
-<script type="text/javascript">
-  // prettier-ignore
-  const channels = JSON.parse('{{ channels|tojson }}');
-  // prettier-ignore
-  const uid = JSON.parse('{{ uid|tojson }}');
+</body>
+</html>
+
+<script>
+document.getElementById("channel-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const name = document.getElementById("channelName").value;
+  const description = document.getElementById("channelDescription").value;
+
+  const response = await fetch("/api/channels", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, description }),
+  });
+
+  const newChannel = await response.json();
+
+  // サイドバーに新しいチャンネルを追加
+  const list = document.getElementById("channel-list");
+  const li = document.createElement("li");
+  li.className = "channel-item d-flex justify-content-between align-items-center mb-2";
+  li.innerHTML = `
+    <span>${newChannel.name}</span>
+    <button class="btn btn-sm btn-outline-danger">削除</button>
+  `;
+  list.appendChild(li);
+
+  // フォームリセットとモーダル閉じる
+  document.getElementById("channel-form").reset();
+  const modal = bootstrap.Modal.getInstance(document.getElementById("channelModal"));
+  modal.hide();
+});
 </script>
-<script
-  src="{{url_for('static',filename='js/channels/create-channel.js')}}"
-  type="module"
-></script>
-<script
-  src="{{url_for('static',filename='js/pagination.js')}}"
-  type="module"
-></script>
-<script
-  src="{{url_for('static',filename='js/channels/delete-channel.js')}}"
-  type="module"
-></script>
-{% endblock %}

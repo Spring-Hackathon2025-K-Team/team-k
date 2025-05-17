@@ -127,7 +127,7 @@ def get_available_channels(uid):
         return Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
 
 
-# チャンネル一覧ページの表示
+# チャンネル一覧の表示
 @app.route('/channels', methods=['GET'])
 def channels_view():
     uid = session.get('uid')    # セッションからユーザーIDを取得
@@ -138,7 +138,7 @@ def channels_view():
         
         if admin_status:
             channels = Channel.get_all()    # 全チャンネルを取得
-            channels.reverse() 
+            channels = Channel.query.order_by(Channel.created_at.desc()).all()
         else:
             channels = Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
                 
@@ -201,6 +201,20 @@ def delete_channel(cid):
     return redirect(url_for('channels_view'))
 
 
+# メッセージの投稿
+@app.route('/channels/<cid>/messages', methods=['POST']) # POSTリクエストのみを受け取る
+def create_message(cid): # URLからcid(チャンネルID)を取得
+    uid = session.get('uid')
+    if uid is None:
+        return redirect(url_for('login_view'))
+
+    message = request.form.get('message')  # フォームからメッセージを取得
+
+    if message: # メッセージが空でない場合
+        Message.create(uid, cid, message)  # メッセージを作成
+
+    return redirect('/channels/{cid}/messages'.format(cid = cid)) #投稿した同じチャンネルにリダイレクト
+
 
 # チャンネル詳細ページの表示
 @app.route('/channels/<cid>/messages', methods=['GET'])
@@ -215,27 +229,12 @@ def detail(cid):
 
     # フロントに渡す
     return render_template(
-        'messages.html', 
+        'channels.html', 
         messages=messages, 
         current_channel=current_channel, 
         uid=uid,
         is_admin=admin_status  # 管理者かどうかの情報を追加
     )
-
-
-# メッセージの投稿
-@app.route('/channels/<cid>/messages', methods=['POST'])
-def create_message(cid):
-    uid = session.get('uid')
-    if uid is None:
-        return redirect(url_for('login_view'))
-
-    message = request.form.get('message')
-
-    if message:
-        Message.create(uid, cid, message)
-
-    return redirect('/channels/{cid}/messages'.format(cid = cid))
 
 
 # メッセージの削除
