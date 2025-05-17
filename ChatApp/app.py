@@ -114,9 +114,9 @@ def logout():
 
 # 1.管理者かどうか判定する関数
 def is_admin(uid):  
-    user = User.find_by_uid(uid)  # クラスモデルからユーザーIDを取得
+    user = User.find_by_uid(uid)  # ユーザーIDからユーザー情報を取得
     if user is None:
-        return False  # セッションにユーザーIDが保存されていない場合、adminではない
+        return False  # ユーザーが存在しない場合、adminではない
     return user.get('role') == 'admin'  # ユーザーの役割がadminかどうかを判定
 
 # 管理者かユーザーかで利用可能なチャンネルを取得する関数
@@ -124,7 +124,8 @@ def get_available_channels(uid):
     if is_admin(uid):  # 管理者の場合
         return Channel.get_all()  # 全チャンネルを取得
     else:  # ユーザーの場合
-        return Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
+        return Channel.find_by_uid(uid)  # ユーザーが利用可能なチャンネルのみ取得
+
 
 
 # チャンネル一覧の表示
@@ -133,21 +134,24 @@ def channels_view():
     uid = session.get('uid')    # セッションからユーザーIDを取得
     if uid is None:  # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
-    else:
-        admin_status = is_admin(uid)  # 管理者かどうかを判定
+    
+    admin_status = is_admin(uid)  # 管理者かどうかを判定
+    channels = get_available_channels(uid)  # 定義した関数を使用して利用可能なチャンネルを取得
+    
+    # 現在のチャンネルがない場合は、デフォルトでNoneとし、テンプレート側で処理
+    current_channel = None
+    # メッセージはデフォルトで空リストに
+    messages = []
         
-        if admin_status:
-            channels = Channel.get_all()    # 全チャンネルを取得
-            
-        else:
-            channels = Channel.find_by_uid(uid)  # 自分のチャンネルだけを取得
-                
-        return render_template(
-            'channels.html', 
-            channels=channels,    # 利用可能なチャンネルを表示するためにフロントに渡す
-            uid=uid,
-            admin_status=admin_status # 管理者かどうかの情報を渡す
-        )
+    return render_template(
+        'channels.html', 
+        channels=channels,    # 利用可能なチャンネルを表示するためにフロントに渡す
+        uid=uid,
+        admin_status=admin_status,  # 管理者かどうかの情報を渡す
+        current_channel=current_channel,  # 現在選択中のチャンネル情報を渡す
+        messages=messages,  # 空のメッセージリストを渡す
+        is_admin=admin_status  # detail関数と整合性を取るため、is_adminも渡す
+    )
 
 
 # チャンネルの作成
@@ -226,16 +230,20 @@ def detail(cid):
     admin_status = is_admin(uid)  # 管理者かどうかを判定
     current_channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
     messages = Message.get_all(cid) # チャンネルIDから全メッセージを取得
+    
+    # チャンネル一覧も取得して渡す
+    channels = get_available_channels(uid)
 
     # フロントに渡す
     return render_template(
         'channels.html', 
+        channels=channels,  # チャンネル一覧を追加
         messages=messages, 
         current_channel=current_channel, 
         uid=uid,
-        is_admin=admin_status  # 管理者かどうかの情報を追加
+        admin_status=admin_status,
+        is_admin=admin_status  # 後方互換性のため残すが修正必要
     )
-
 
 # メッセージの削除
 @app.route('/channels/<cid>/messages/<message_id>', methods=['POST'])
@@ -264,53 +272,53 @@ if __name__ == '__main__':
     
     
     
-入力と出力を定義
-入力＝@app.route('/channels/<cid>/messages/<message_id>', methods=['GET'])
-フロントへの変数＝チャンネルIDにもとづく全てのメッセージの取得
+# 入力と出力を定義
+# 入力＝@app.route('/channels/<cid>/messages/<message_id>', methods=['GET'])
+# フロントへの変数＝チャンネルIDにもとづく全てのメッセージの取得
 
 
 
 
 
-出力＝
-    return render_template(
-        'channels.html', 
-        messages=messages, 
-        current_channel=current_channel, 
-        uid=uid,
-        is_admin=admin_status  # 管理者かどうかの情報を追加
-    )
+# 出力＝
+#     return render_template(
+#         'channels.html', 
+#         messages=messages, 
+#         current_channel=current_channel, 
+#         uid=uid,
+#         is_admin=admin_status  # 管理者かどうかの情報を追加
+#     )
     
-## サーバー
-def チャンネルとそれに紐づくメッセージを返す関数:
+# ## サーバー
+# def チャンネルとそれに紐づくメッセージを返す関数:
     
-    チャンネル一覧 = slect * from channnels;
-    for チャンネル in チャンネル一覧:
-        チャンネルに紐づくメッセージ = select messages where channel = チャンネル;
+#     チャンネル一覧 = slect * from channnels;
+#     for チャンネル in チャンネル一覧:
+#         チャンネルに紐づくメッセージ = select messages where channel = チャンネル;
 
-    return {
-        チャンネル: [チャンネルに紐づくメッセージ],
-        channel1: [message1, message2, message3],
-        channel2: [message2-1, message2-2, message2-3],
-        channel3: [message3-1, message3-2, message3-3]
-    }
+#     return {
+#         チャンネル: [チャンネルに紐づくメッセージ],
+#         channel1: [message1, message2, message3],
+#         channel2: [message2-1, message2-2, message2-3],
+#         channel3: [message3-1, message3-2, message3-3]
+#     }
 
-## フロントエンド
-channelAndMessages = {
-    channel1: [message1, message2, message3]
-    channel2: [message2-1, message2-2, message2-3]
-    channel3: [message3-1, message3-2, message3-3]
-}
-変数 = XXXX
+# ## フロントエンド
+# channelAndMessages = {
+#     channel1: [message1, message2, message3]
+#     channel2: [message2-1, message2-2, message2-3]
+#     channel3: [message3-1, message3-2, message3-3]
+# }
+# 変数 = XXXX
 
-if 変数 = channel1:
-    for message in messages
-        channelAndMessages[channel1][message]
+# if 変数 = channel1:
+#     for message in messages
+#         channelAndMessages[channel1][message]
 
-if 変数 = channel2:
-    for message in messages
-        channelAndMessages[channel2][message]
+# if 変数 = channel2:
+#     for message in messages
+#         channelAndMessages[channel2][message]
 
-if 変数 = channel3:
-    for message in messages
-        channelAndMessages[channel3][message]
+# if 変数 = channel3:
+#     for message in messages
+#         channelAndMessages[channel3][message]
