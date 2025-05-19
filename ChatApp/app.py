@@ -1,11 +1,12 @@
-from flask import Flask, request, redirect, render_template, session, flash, abort, url_for
-from datetime import timedelta
+from flask import Flask, request, redirect, render_template, session, flash, abort, url_for, send_from_directory
+from datetime import timedelta, datetime
 import hashlib
 import uuid
-import re
-import os
-
-from models import User, Channel, Message
+import re           # 正規表現を使用する
+import os       # osモジュールを使用する
+import pytz     # 日本のタイムゾーンを使用する
+from werkzeug.utils import secure_filename      # ファイル名を安全にするモジュール
+from models import User, Channel, Message, Resume
 from util.assets import bundle_css_files
 
 
@@ -14,8 +15,20 @@ EMAIL_PATTERN = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 SESSION_DAYS = 30
 
 app = Flask(__name__)
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')     # アップロードフォルダのパスを設定
+ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
 app.secret_key = os.getenv('SECRET_KEY', uuid.uuid4().hex)
 app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
+# Flaskアプリケーション設定にアップロードフォルダを追加
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 最大16MB
+
+# アップロードフォルダが存在しない場合は作成
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ファイル拡張子のチェック
+def allowed_file(filename):
+    return '.' in filename and \
+            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # 静的ファイルをキャッシュする設定。開発中はコメントアウト推奨。
 # app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 2678400
@@ -105,8 +118,8 @@ def login_process():
     return redirect(url_for('login_view'))
 
 
-# ログアウト
-@app.route('/logout')
+# ログアウト - POSTメソッドに変更
+@app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     return redirect(url_for('login_view'))
@@ -124,8 +137,7 @@ def get_available_channels(uid):
     if is_admin(uid):  # 管理者の場合
         return Channel.get_all()  # 全チャンネルを取得
     else:  # ユーザーの場合
-        return Channel.find_by_uid(uid)  # ユーザーが利用可能なチャンネルのみ取得
-
+        return Channel.find_by_uid(uid)  # ユーザーが利用可能なチャンネルのみ取得(ユーザーが作成したチャンネル)
 
 
 # チャンネル一覧の表示
@@ -162,12 +174,27 @@ def create_channel():
     if uid is None: # セッションにユーザーIDが保存されていない場合、ログインページにリダイレクト
         return redirect(url_for('login_view'))
     
-    new_channel_name = request.form.get('channelTitle') # フォームからチャンネル名を取得
+    # ユーザーが管理者かどうかを確認
+    admin_status = is_admin(uid)
+    
+    # 管理者でない場合、ユーザーが既にチャンネルを作成しているか確認
+    if not admin_status:
+        user_channels = Channel.find_by_uid(uid)
+        if user_channels and len(user_channels) >= 1:
+            error = '応募者は1つのチャンネルしか作成できません'
+            return render_template('error/error.html', error_message=error)
+    
+    new_channel_name = request.form.get('channelTitle') # 入力されたフォームからチャンネル名を取得
     channel = Channel.find_by_name(new_channel_name)    # データベースにあるチャンネル名からチャンネルを取得
     if channel is None:     # チャンネルが存在しない場合
-        new_channel_description = request.form.get('channelDescription') # フォームからチャンネル説明を取得
+        new_channel_description = request.form.get('channelDescription') # 入力されたフォームからチャンネル説明を取得
         Channel.create(uid, new_channel_name, new_channel_description)  # チャンネルを作成
-        return redirect(url_for('channels_view'))   # チャンネル一覧ページにリダイレクト        
+        
+        # 新しく作成したチャンネルを探して、そのチャンネルページに移動する
+        new_channel = Channel.find_by_name(new_channel_name)
+        if new_channel:
+            return redirect(f'/channels/{new_channel["id"]}/messages')
+        return redirect(url_for('channels_view'))   # 見つからない場合はチャンネル一覧ページにリダイレクト        
     else: # チャンネルが存在する場合、エラーメッセージを表示
         error = '既に同じ名前のチャンネルが存在しています'
         return render_template('error/error.html', error_message=error)
@@ -217,10 +244,10 @@ def create_message(cid): # URLからcid(チャンネルID)を取得
     if message: # メッセージが空でない場合
         Message.create(uid, cid, message)  # メッセージを作成
 
-    return redirect('/channels/{cid}/messages'.format(cid = cid)) #投稿した同じチャンネルにリダイレクト
+    return redirect(f'/channels/{cid}/messages') #投稿した同じチャンネルにリダイレクト
 
 
-# チャンネル詳細ページの表示
+# チャンネルのチャット画面を表示して、アクセス権を確認する処理
 @app.route('/channels/<cid>/messages', methods=['GET'])
 def detail(cid):
     uid = session.get('uid')  # セッションからユーザーIDを取得
@@ -229,17 +256,49 @@ def detail(cid):
 
     admin_status = is_admin(uid)  # 管理者かどうかを判定
     current_channel = Channel.find_by_cid(cid)  # チャンネルIDからチャンネルを取得
+    
+    # ユーザーがアクセスできるチャンネルか確認
+    channels = get_available_channels(uid)
+    channel_ids = [ch['id'] for ch in channels]
+    
+    if int(cid) not in channel_ids and not admin_status:
+        flash('このチャンネルにアクセスする権限がありません')
+        return redirect(url_for('channels_view'))
+    
     messages = Message.get_all(cid) # チャンネルIDから全メッセージを取得
     
-    # チャンネル一覧も取得して渡す
-    channels = get_available_channels(uid)
+    # メッセージを日付ごとにグループ化
+    grouped_messages = {}
+    jst = pytz.timezone('Asia/Tokyo')  # 日本のタイムゾーンを指定   
+    for message in messages:
+        # created_atをdatetimeに変換し、jstタイムゾーンに変換
+        if isinstance(message['created_at'], str):
+            # 文字列の場合はdatetimeに変換
+            message_date = datetime.strptime(message['created_at'], '%Y-%m-%d %H:%M')
+        else:
+            # datetimeオブジェクトの場合はそのまま使用
+            message_date = message['created_at']
+        # タイムゾーンをJSTに設定
+        message_date = message_date.replace(tzinfo=pytz.utc).astimezone(jst)
+        
+        # 日付のみを取得してグループ化のキーに使用
+        date_key = message_date.strftime('%Y-%m-%d')
+        
+        # メッセージに日本時間の表示用フォーマットを追加
+        message['formatted_time'] = message_date.strftime('%Y-%m-%d %H:%M')
+        message['date_only'] = date_key
+        if date_key not in grouped_messages:
+            grouped_messages[date_key] = []
+        
+        grouped_messages[date_key].append(message)
 
     # フロントに渡す
     return render_template(
         'channels.html', 
-        channels=channels,  # チャンネル一覧を追加
-        messages=messages, 
-        current_channel=current_channel, 
+        channels=channels,  # チャンネル一覧
+        messages=messages,  # 現在のチャンネルのメッセージ一覧
+        grouped_messages=grouped_messages,  # 日付ごとにグループ化されたメッセージ
+        current_channel=current_channel,  # 現在のチャンネル情報
         uid=uid,
         admin_status=admin_status,
         is_admin=admin_status  # 後方互換性のため残すが修正必要
@@ -254,71 +313,21 @@ def delete_message(cid, message_id):
 
     if message_id:
         Message.delete(message_id)
-    return redirect('/channels/{cid}/messages'.format(cid = cid))
+    return redirect(f'/channels/{cid}/messages')
 
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('error/404.html'),404
+    return render_template('error/404.html'), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    return render_template('error/500.html'),500
+    return render_template('error/500.html'), 500
 
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
     
-    
-    
-# 入力と出力を定義
-# 入力＝@app.route('/channels/<cid>/messages/<message_id>', methods=['GET'])
-# フロントへの変数＝チャンネルIDにもとづく全てのメッセージの取得
 
 
-
-
-
-# 出力＝
-#     return render_template(
-#         'channels.html', 
-#         messages=messages, 
-#         current_channel=current_channel, 
-#         uid=uid,
-#         is_admin=admin_status  # 管理者かどうかの情報を追加
-#     )
-    
-# ## サーバー
-# def チャンネルとそれに紐づくメッセージを返す関数:
-    
-#     チャンネル一覧 = slect * from channnels;
-#     for チャンネル in チャンネル一覧:
-#         チャンネルに紐づくメッセージ = select messages where channel = チャンネル;
-
-#     return {
-#         チャンネル: [チャンネルに紐づくメッセージ],
-#         channel1: [message1, message2, message3],
-#         channel2: [message2-1, message2-2, message2-3],
-#         channel3: [message3-1, message3-2, message3-3]
-#     }
-
-# ## フロントエンド
-# channelAndMessages = {
-#     channel1: [message1, message2, message3]
-#     channel2: [message2-1, message2-2, message2-3]
-#     channel3: [message3-1, message3-2, message3-3]
-# }
-# 変数 = XXXX
-
-# if 変数 = channel1:
-#     for message in messages
-#         channelAndMessages[channel1][message]
-
-# if 変数 = channel2:
-#     for message in messages
-#         channelAndMessages[channel2][message]
-
-# if 変数 = channel3:
-#     for message in messages
-#         channelAndMessages[channel3][message]
