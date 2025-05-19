@@ -1,6 +1,9 @@
-from flask import abort
-import pymysql
-from util.DB import DB
+from flask import abort     # Flaskのabort関数をインポート
+import pymysql           # MySQLデータベースに接続するためのモジュール
+from util.DB import DB      # データベース接続のためのモジュール
+from datetime import datetime       # 日時を扱うためのモジュール
+import os                 # ファイルパスを扱うためのモジュール
+from werkzeug.utils import secure_filename    # ファイル名を安全な形式に変換するためのモジュール
 
 
 # 初期起動時にコネクションプールを作成し接続を確立
@@ -89,7 +92,7 @@ class Channel:
         finally:
             db_pool.release(conn)
 
-    # 全てのチャンネルを取得する
+    # 全てのチャンネルを取得する（管理者用）
     @classmethod
     def get_all(cls):
         conn = db_pool.get_conn()
@@ -105,7 +108,7 @@ class Channel:
         finally:
             db_pool.release(conn)
 
-    # 1つのチャンネルを取得する
+    # 1つのチャンネルを取得する（ユーザー用）
     @classmethod
     def find_by_cid(cls, cid):
         conn = db_pool.get_conn()
@@ -193,8 +196,8 @@ class Message:
         conn = db_pool.get_conn()
         try:
             with conn.cursor() as cur:
-                sql = "INSERT INTO messages(uid, cid, message) VALUES(%s, %s, %s)"  # メッセージを作成するSQL文
-                cur.execute(sql, (uid, cid, message,))
+                sql = "INSERT INTO messages(uid, cid, message, created_at) VALUES(%s, %s, %s, %s)"  # メッセージを作成するSQL文
+                cur.execute(sql, (uid, cid, message, datetime.now()))
                 conn.commit()
         except pymysql.Error as e:
             print(f'エラーが発生しています：{e}')
@@ -210,7 +213,7 @@ class Message:
             with conn.cursor() as cur:
                 # メッセージテーブルとユーザーテーブルを結合して、チャンネルIDから全メッセージを取得する
                 sql = """
-                    SELECT id, u.uid, user_name, message 
+                    SELECT id, u.uid, user_name, message, m.created_at 
                     FROM messages AS m 
                     INNER JOIN users AS u ON m.uid = u.uid 
                     WHERE cid = %s 
@@ -225,7 +228,7 @@ class Message:
         finally:
             db_pool.release(conn)
 
-    # メッセージIDからメッセージを取得するメソッド
+    # メッセージIDからメッセージを取得して削除するメソッド
     @classmethod
     def delete(cls, message_id):
         conn = db_pool.get_conn()
@@ -239,3 +242,6 @@ class Message:
             abort(500)
         finally:
             db_pool.release(conn)
+            
+
+

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>サイドバーのレイアウト確認</title>
+  <title>チャンネル - 株式会社K team</title>
   <link rel="stylesheet" href="sidebar.css" />
   <!-- Ionicons for trash icons -->
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -10,6 +10,136 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    /* スタイルを追加： クリック可能なチャンネル */
+    .channel-item {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .channel-item:hover {
+      background-color: #f0f0f0;
+    }
+    .channel-item.active {
+      background-color: #e0e0e0;
+      font-weight: bold;
+    }
+    .admin-badge {
+      background-color: #007bff;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8em;
+    }
+    
+    /* メッセージスタイル */
+    .message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .my-message {
+      background-color: #e3f2fd;
+      margin-left: 20%;
+    }
+    .other-message {
+      background-color: #f5f5f5;
+      margin-right: 20%;
+    }
+    .message-user {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .message-text {
+      margin-bottom: 5px;
+    }
+    .message-time {
+      font-size: 0.8em;
+      color: #6c757d;
+      text-align: right;
+      margin-bottom: 0;
+    }
+    .message-delete-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #dc3545;
+      cursor: pointer;
+      font-size: 1.2em;
+      opacity: 0.7;
+    }
+    .message-delete-button:hover {
+      opacity: 1;
+    }
+    
+    /* 日付区切り */
+    .date-divider {
+      position: relative;
+      margin: 20px 0;
+    }
+    .date-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #dee2e6;
+      z-index: -1;
+    }
+    .date-label {
+      display: inline-block;
+      position: relative;
+      background-color: #f8f9fa;
+      padding: 5px 15px;
+      font-size: 0.9em;
+      color: #6c757d;
+    }
+    
+    /* モーダルスタイル */
+    .modal-content {
+      border-radius: 12px;
+      border: 8px solid #084C84;
+    }
+    .btn-info {
+      background-color: #007bff;
+      border: none;
+    }
+    .btn-info:hover {
+      background-color: #0056b3;
+    }
+    
+    /* レイアウト */
+    .layout-container {
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+    .chat-input {
+      padding: 10px 0;
+    }
+  </style>
 </head>
 <body>
   <!-- 全体のレイアウト -->
@@ -18,60 +148,93 @@
     <div class="sidebar bg-light p-3" style="width: 260px;">
       <div class="sidebar-header mb-3">
         <h4 class="fw-bold">株式会社K team</h4>
-        <div class="d-flex justify-content-between align-items-center">
+        {% if admin_status %}
+        <span class="admin-badge">管理者</span>
+        {% endif %}
+        <div class="d-flex justify-content-between align-items-center mt-3">
           <span class="fw-semibold">チャンネル一覧</span>
           <!-- モーダルを開くボタン -->
           <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#channelModal">＋</button>
         </div>
         <hr>
       </div>
+      <!-- チャンネルリスト -->
       <div class="channel-list">
-       <ul class="list-unstyled">
-       {% for channel in channels %}
-        <li class="d-flex justify-content-between align-items-center mb-2">
-          <span>{{ channel.name }}</span> 
-        {% if admin_status or channel.uid == uid%}
-          <form method="POST" action="/channels/{{ channel.id }}/delete">
-          <button class="btn btn-sm btn-outline-secondary">
-          <ion-icon name="trash-outline"></ion-icon>
-          </button>
-          </form>
-        {% endif %}
-        </li>
-      {% endfor %}
-      </ul>
+        <ul class="list-unstyled" id="channel-list">
+          {% for channel in channels %}
+          <li class="channel-item d-flex justify-content-between align-items-center mb-2 {% if current_channel and current_channel.id == channel.id %}active{% endif %}">
+            <!-- チャンネル名をクリック可能にする -->
+            <a href="/channels/{{ channel.id }}/messages" class="channel-link text-decoration-none text-dark flex-grow-1">
+              {{ channel.name }}
+            </a>
+            <!-- 削除ボタン -->
+            {% if admin_status or channel.uid == uid %}
+            <form method="POST" action="/channels/{{ channel.id }}/delete/" class="ms-2">
+              <button type="submit" class="btn btn-sm btn-outline-secondary delete-btn">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </form>
+            {% endif %}
+          </li>
+          {% endfor %}
+          <!-- チャンネル名を編集する -->
+          {% if (not admin_status and current_channel.uid == uid) or admin_status %}
+          <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editChannelModal">編集</button>
+          {% endif %}
+        </ul>
       </div>
+      
+      
+      <!-- ログアウト -->
       <div class="logout-section mt-auto">
-        <form>
-          <button class="btn btn-outline-dark w-100">ログアウト</button>
+        <form action="/logout" method="POST">
+          <button type="submit" class="btn btn-outline-dark w-100">ログアウト</button>
         </form>
       </div>
     </div>
 
     <!-- チャット部分 -->
     <div class="chat-container flex-grow-1 p-3">
+      {% if current_channel %}
       <div class="chat-header d-flex align-items-center justify-content-between mb-3">
-        <h3>{{ current_channel.name }}</h3>
         <div>
-          <button id="show-chat-button" class="btn btn-outline-primary me-2">投稿</button>
-          <button id="show-file-button" class="btn btn-outline-primary">ファイル</button>
+          <h3>{{ current_channel.name }}</h3>
+          <p class="text-muted">{{ current_channel.description }}</p>
+        </div>
+        <div>
+          <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resumeListModal">会社資料</button>
+          <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#resumeUploadModal">履歴書</button>
         </div>
       </div>
       <div class="chat-messages">
-        {% for message in messages %}
-        <div class="message {% if message.uid == uid %}my-message{% else %}other-message{% endif %}">
-          <p class="message-user">{{ message.user_name }}</p>
-          <p class="message-text">{{ message.message }}</p>
-          <p class="message-time">{{ message.timestamp }}</p>
-          {% if message.uid == uid %}
-          <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}/delete">
-            <button type="submit" class="message-delete-button">
-              <ion-icon name="trash-bin-outline"></ion-icon>
-            </button>
-          </form>
-          {% endif %}
-        </div>
-        {% endfor %}
+        {% if grouped_messages %}
+          {% for date, date_messages in grouped_messages.items() %}
+            <!-- 日付ヘッダー -->
+            <div class="date-divider text-center my-3">
+              <span class="date-label bg-light px-3 py-1 rounded">{{ date }}</span>
+            </div>
+            
+            <!-- メッセージを表示 -->
+            {% for message in date_messages %}
+              <div class="message {% if message.uid == uid %}my-message{% else %}other-message{% endif %}">
+                <p class="message-user">{{ message.user_name }}</p> <!-- ユーザー名 -->
+                <p class="message-text">{{ message.message }}</p> <!-- メッセージ内容 -->
+                <p class="message-time">{{ message.formatted_time.split(' ')[1] }}</p> <!-- 時間表示 -->
+                {% if message.uid == uid %}
+                <form method="POST" action="/channels/{{ current_channel.id }}/messages/{{ message.id }}">
+                  <button type="submit" class="message-delete-button">
+                    <ion-icon name="trash-bin-outline"></ion-icon>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% endfor %}
+        {% else %}
+          <div class="text-center my-5 text-muted">
+            <p>メッセージがありません。最初のメッセージを送信しましょう！</p>
+          </div>
+        {% endif %}
       </div>
       <div class="chat-input mt-3">
         <form method="POST" action="/channels/{{ current_channel.id }}/messages">
@@ -83,68 +246,83 @@
           </div>
         </form>
       </div>
+      {% else %}
+      <div class="no-channel-selected text-center mt-5">
+        <h3>チャンネルを選択してください</h3>
+        <p>サイドバーからチャンネルを選択するとメッセージが表示されます</p>
+      </div>
+      {% endif %}
     </div>
   </div>
 
-  <!-- モーダル：チャンネル作成 -->
-  <div class="modal fade" id="createChannelModal" tabindex="-1" aria-labelledby="createChannelLabel" aria-hidden="true">
+  <!-- モーダル：チャンネル追加 -->
+  <div class="modal fade" id="channelModal" tabindex="-1" aria-labelledby="channelModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content" style="border: 8px solid #084C84;">
+      <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="createChannelLabel">チャンネルを作成する</h5>
+          <h5 class="modal-title" id="channelModalLabel">チャンネルを作成する</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
         </div>
         <div class="modal-body">
-         <form method="POST" action="/channels/create">
-          <div class="mb-3">
-           <label for="channelName" class="form-label">チャンネル名</label>
-           <input type="text" class="form-control" id="channelName" name="name" required>
-          </div>
-          <div class="mb-3">
-           <label for="channelDescription" class="form-label">チャンネルの説明</label>
-           <input type="text" class="form-control" id="channelDescription" name="description">
-          </div>
-          <div class="text-center">
-           <button type="submit" class="btn btn-info text-white">登録</button>
-          </div>
-        </form>
+          <form method="POST" action="/channels">
+            <div class="mb-3">
+              <label for="channelTitle" class="form-label">チャンネル名</label>
+              <input type="text" class="form-control" id="channelTitle" name="channelTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="channelDescription" class="form-label">チャンネルの説明</label>
+              <input type="text" class="form-control" id="channelDescription" name="channelDescription">
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-info text-white">登録</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- モーダル：チャンネル編集 -->
+  {% if current_channel %}
+  <div class="modal fade" id="editChannelModal" tabindex="-1" aria-labelledby="editChannelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editChannelModalLabel">チャンネルを編集する</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="/channels/update/{{ current_channel.id }}">
+            <div class="mb-3">
+              <label for="channelTitle" class="form-label">チャンネル名</label>
+              <input type="text" class="form-control" id="channelTitle" name="channelTitle" value="{{ current_channel.name }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="channelDescription" class="form-label">チャンネルの説明</label>
+              <input type="text" class="form-control" id="channelDescription" name="channelDescription" value="{{ current_channel.description }}">
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-info text-white">更新</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 現在の閲覧しているチャンネルをハイライト表示する（サイドバー）
+      const currentUrl = window.location.pathname;
+      const channelLinks = document.querySelectorAll('.channel-link');
+      
+      channelLinks.forEach(link => {
+        if (link.getAttribute('href') === currentUrl) {
+          link.parentElement.classList.add('active');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
-
-<script>
-document.getElementById("channel-form").addEventListener("submit", async function (e) {
-  e.preventDefault();
-
-  const name = document.getElementById("channelName").value;
-  const description = document.getElementById("channelDescription").value;
-
-  const response = await fetch("/api/channels", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, description }),
-  });
-
-  const newChannel = await response.json();
-
-  // サイドバーに新しいチャンネルを追加
-  const list = document.getElementById("channel-list");
-  const li = document.createElement("li");
-  li.className = "channel-item d-flex justify-content-between align-items-center mb-2";
-  li.innerHTML = `
-    <span>${newChannel.name}</span>
-    <button class="btn btn-sm btn-outline-danger">削除</button>
-  `;
-  list.appendChild(li);
-
-  // フォームリセットとモーダル閉じる
-  document.getElementById("channel-form").reset();
-  const modal = bootstrap.Modal.getInstance(document.getElementById("channelModal"));
-  modal.hide();
-});
-</script>
