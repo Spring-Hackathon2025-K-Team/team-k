@@ -38,14 +38,14 @@ CREATE TABLE messages(
     FOREIGN KEY (cid) REFERENCES channels(id) on DELETE CASCADE
 );
 
-CREATE TABLE resumes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    uid VARCHAR(255) NOT NULL,
-    cid INT NOT NULL,
-    filename VARCHAR(255) NOT NULL,
-    original_filename VARCHAR(255) NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE,
-    FOREIGN KEY (cid) REFERENCES channels(id) ON DELETE CASCADE
-);
+-- CREATE TABLE resumes (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     uid VARCHAR(255) NOT NULL,
+--     cid INT NOT NULL,
+--     filename VARCHAR(255) NOT NULL,
+--     original_filename VARCHAR(255) NOT NULL,
+--     file_path VARCHAR(255) NOT NULL,
+--     uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE,
+--     FOREIGN KEY (cid) REFERENCES channels(id) ON DELETE CASCADE
+-- );

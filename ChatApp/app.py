@@ -6,7 +6,7 @@ import re           # 正規表現を使用する
 import os       # osモジュールを使用する
 import pytz     # 日本のタイムゾーンを使用する
 from werkzeug.utils import secure_filename      # ファイル名を安全にするモジュール
-from models import User, Channel, Message, Resume
+from models import User, Channel, Message
 from util.assets import bundle_css_files
 
 
