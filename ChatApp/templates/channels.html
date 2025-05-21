@@ -12,19 +12,25 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     /* スタイルを追加： クリック可能なチャンネル */
+    .fw-bold{
+      border-left: solid 6px #828282;
+      padding-left: 10px; 
+      magin-top:1rem;
+      margin-bottom: 3rem;
+    }
+
     .channel-item {
       cursor: pointer;
       padding: 8px;
       border-radius: 4px;
       transition: background-color 0.2s;
     }
+
     .channel-item:hover {
       background-color: #f0f0f0;
     }
-    .channel-item.active {
-      background-color: #e0e0e0;
-      font-weight: bold;
-    }
+
+
     .admin-badge {
       background-color: #007bff;
       color: white;
@@ -32,7 +38,11 @@
       border-radius: 4px;
       font-size: 0.8em;
     }
-    
+
+    .fw-semibold{
+      padding-left: 0.5rem;
+    }
+
     /* メッセージスタイル */
     .message {
       margin-bottom: 15px;
@@ -123,6 +133,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      background-color: #D6CDC4 !important;
     }
     .chat-container {
       height: 100vh;
@@ -139,6 +150,20 @@
     .chat-input {
       padding: 10px 0;
     }
+
+    .logout-section .btn.btn-outline-dark {
+      background-color: white; 
+      color: #333; 
+      border-color: #333; 
+      margin-bottom: 2rem;
+    }
+
+    .logout-section .btn.btn-outline-dark:hover {
+    background-color: #f0f0f0; 
+    color: #000; 
+    border-color: #000; 
+}
+
   </style>
 </head>
 <body>
@@ -151,6 +176,7 @@
         {% if admin_status %}
         <span class="admin-badge">管理者</span>
         {% endif %}
+        
         <div class="d-flex justify-content-between align-items-center mt-3">
           <span class="fw-semibold">チャンネル一覧</span>
           <!-- モーダルを開くボタン -->

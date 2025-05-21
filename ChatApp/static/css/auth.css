@@ -126,8 +126,7 @@
 
 .auth-form input:focus {
   border: 2px var(--sub-black) solid;
-  background-color: #828282;
-  color: #828282;
+  background-color: #fafafa;
 }
 
 .auth-form label {
