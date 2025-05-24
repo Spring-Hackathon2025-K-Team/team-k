@@ -129,6 +129,12 @@
   background-color: #fafafa;
 }
 
+.is_admin {
+  display: flex;
+  flex-direction: left; 
+  align-items: center;
+}
+
 .auth-form label {
   font-size: 12px;
   color: #828282;
@@ -186,4 +192,24 @@
 }
 .btn-info:hover {
   background-color: #369fb1;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-form input:not([type="checkbox"]) {
+  border: solid 2px lightgrey;
+  outline: none;
+  margin-bottom: 10px;
+  line-height: 32px;
+  width: 100%;
+  padding: 0.2rem 1rem;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;
 }
