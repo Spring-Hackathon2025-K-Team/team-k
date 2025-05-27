@@ -94,8 +94,8 @@
     if (this.checked) {
       secretSection.style.display = 'block';
     } else {
-      secretSection.style.display = 'none';
-      document.getElementById('admin_secret').value = '';
+      secretSection.style.display = 'none'; // チェックボックスが外れたら入力をクリア
+      document.getElementById('admin_secret').value = ''; 
     }
   });
 </script>
