@@ -18,7 +18,7 @@ docker compose up
 
 **ブラウザで確認**
 ```
-http://localhost:55000
+
 ```
 
 
@@ -47,3 +47,4 @@ http://localhost:55000
 =======
 ```
 >>>>>>> 9e15c4af118070795811a77594348581c2493d04
+http://localhost:55000

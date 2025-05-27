@@ -29,14 +29,12 @@
        <ul class="list-unstyled">
        {% for channel in channels %}
         <li class="d-flex justify-content-between align-items-center mb-2">
-          <span>{{ channel.name }}</span> 
-        {% if admin_status or channel.uid == uid%}
-          <form method="POST" action="/channels/{{ channel.id }}/delete">
-          <button class="btn btn-sm btn-outline-secondary">
-          <ion-icon name="trash-outline"></ion-icon>
-          </button>
-          </form>
-        {% endif %}
+         <span>{{ channel.name }}</span>
+         <form method="POST" action="/channels/{{ channel.id }}/delete">
+         <button class="btn btn-sm btn-outline-secondary">
+         <ion-icon name="trash-outline"></ion-icon>
+         </button>
+         </form>
         </li>
       {% endfor %}
       </ul>
@@ -58,6 +56,7 @@
         </div>
       </div>
       <div class="chat-messages">
+        {% if messages|length > 0 %}
         {% for message in messages %}
         <div class="message {% if message.uid == uid %}my-message{% else %}other-message{% endif %}">
           <p class="message-user">{{ message.user_name }}</p>
@@ -72,6 +71,11 @@
           {% endif %}
         </div>
         {% endfor %}
+      {% else %}
+      <div class="no-message">
+        <p>メッセージはありません。</p>
+      </div>
+      {% endif %}
       </div>
       <div class="chat-input mt-3">
         <form method="POST" action="/channels/{{ current_channel.id }}/messages">
