@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, session, flash, abort, url_for, send_from_directory
+from flask import Flask, request, redirect, render_template, session, flash, abort, url_for
 from datetime import timedelta, datetime
 import hashlib
 import uuid
@@ -8,32 +8,25 @@ import pytz     # 日本のタイムゾーンを使用する
 from werkzeug.utils import secure_filename      # ファイル名を安全にするモジュール
 from models import User, Channel, Message
 from util.assets import bundle_css_files
+from flask_socketio import SocketIO, join_room, leave_room  # SocketIOを使用するためのモジュール
 
+
+app = Flask(__name__)
 
 # 定数定義
 EMAIL_PATTERN = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 SESSION_DAYS = 30
-
-app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')     # アップロードフォルダのパスを設定
-ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
 app.secret_key = os.getenv('SECRET_KEY', uuid.uuid4().hex)
 app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
-# Flaskアプリケーション設定にアップロードフォルダを追加
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 最大16MB
 
-# アップロードフォルダが存在しない場合は作成
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-# ファイル拡張子のチェック
-def allowed_file(filename):
-    return '.' in filename and \
-            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# SocketIOの初期化
+socketio = SocketIO(app, cors_allowed_origins="*") 
 
 # 静的ファイルをキャッシュする設定。開発中はコメントアウト推奨。
 # app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 2678400
 
 bundle_css_files(app)
+
 
 # ルートページのリダイレクト処理
 @app.route('/', methods=['GET'])
@@ -95,6 +88,12 @@ def signup_process():
 def login_view():
     return render_template('auth/login.html')
 
+# ログアウト
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return redirect(url_for('login_view'))
+
 
 # ログイン処理
 @app.route('/login', methods=['POST'])
@@ -115,13 +114,6 @@ def login_process():
             else:
                 session['uid'] = user["uid"]    # セッションにユーザーIDを保存
                 return redirect(url_for('channels_view'))   # チャンネル一覧ページにリダイレクト
-    return redirect(url_for('login_view'))
-
-
-# ログアウト - POSTメソッドに変更
-@app.route('/logout', methods=['POST'])
-def logout():
-    session.clear()
     return redirect(url_for('login_view'))
 
 
@@ -190,10 +182,10 @@ def create_channel():
         new_channel_description = request.form.get('channelDescription') # 入力されたフォームからチャンネル説明を取得
         Channel.create(uid, new_channel_name, new_channel_description)  # チャンネルを作成
         
-        # 新しく作成したチャンネルを探して、そのチャンネルページに移動する
+        # 新しく作成したチャンネルを探して、そのチャンネルページに移動する処理群
         new_channel = Channel.find_by_name(new_channel_name)
         if new_channel:
-            return redirect(f'/channels/{new_channel["id"]}/messages')
+            return redirect(f'/channels/{new_channel["id"]}/messages') #GETリクエストで[チャンネルのチャット画面を表示して、アクセス権を確認する処理]にリダイレクト
         return redirect(url_for('channels_view'))   # 見つからない場合はチャンネル一覧ページにリダイレクト        
     else: # チャンネルが存在する場合、エラーメッセージを表示
         error = '既に同じ名前のチャンネルが存在しています'
@@ -241,10 +233,26 @@ def create_message(cid): # URLからcid(チャンネルID)を取得
 
     message = request.form.get('message')  # フォームからメッセージを取得
 
-    if message: # メッセージが空でない場合
-        Message.create(uid, cid, message)  # メッセージを作成
+    if message:
+        # データベースにメッセージを保存
+        Message.create(uid, cid, message)
+        
+        # 投稿したユーザー情報を取得
+        user = User.find_by_uid(uid)
+        
+        # WebSocketで他のクライアントにリアルタイム通知
+        jst = pytz.timezone('Asia/Tokyo')
+        current_time = datetime.now(jst) # 現在の時刻を取得する公式メソッド(datetime.now)
+        
+        # socketio.emit('関数名', データ, room='送りたい部屋') サーバーからユーザーにデータを送信する関数
+        socketio.emit('new_message', {
+            'message': message,
+            'user_name': user['name'],
+            'formatted_time': current_time.strftime('%Y-%m-%d %H:%M'),  # 時刻あり（タイムラインのメッセージ用）
+            'date_only': current_time.strftime('%Y-%m-%d')  # 日付のみ(メッセージのグループ化のキーに使用）
+        }, room=f'channel_{cid}')
 
-    return redirect(f'/channels/{cid}/messages') #投稿した同じチャンネルにリダイレクト
+    return redirect(f'/channels/{cid}/messages')
 
 
 # チャンネルのチャット画面を表示して、アクセス権を確認する処理
@@ -285,12 +293,12 @@ def detail(cid):
         date_key = message_date.strftime('%Y-%m-%d')
         
         # メッセージに日本時間の表示用フォーマットを追加
-        message['formatted_time'] = message_date.strftime('%Y-%m-%d %H:%M')
-        message['date_only'] = date_key
-        if date_key not in grouped_messages:
-            grouped_messages[date_key] = []
+        message['formatted_time'] = message_date.strftime('%Y-%m-%d %H:%M')#各メッセージの辞書に新しいキー(formatted_time)を追加
+        message['date_only'] = date_key # 各メッセージの辞書に新しいキー(date_only)を追加
+        if date_key not in grouped_messages: # 新しい日付のキーがない場合は空のリストを作成=日付ごとのメッセージを入れる容器を作成
+            grouped_messages[date_key] = [] 
         
-        grouped_messages[date_key].append(message)
+        grouped_messages[date_key].append(message)  # メッセージを日付ごとのリストに追加
 
     # フロントに渡す
     return render_template(
@@ -313,21 +321,46 @@ def delete_message(cid, message_id):
 
     if message_id:
         Message.delete(message_id)
+        # メッセージを削除した後、WebSocketで他のクライアントに通知
+        # socketio.emit('イベント名', データ, room='送りたい部屋') サーバーからクライアントにデータを送信する関数
+        socketio.emit('message_deleted', {
+            'message_id': message_id
+        }, room=f'channel_{cid}')
     return redirect(f'/channels/{cid}/messages')
 
 
+# WebSocketイベントハンドラー
+# サーバーに誰かがリアルタイム通信でつながったことを確認するためのイベント
+@socketio.on('connect')
+def on_connect():
+    print('回線が接続されました') #接続されたらコンソールに表示
+
+@socketio.on('disconnect')
+def on_disconnect():
+    print('回線が切断されました') #切断されたらコンソールに表示
+
+@socketio.on('join_channel') #フロントからのエンドポイント
+def on_join_channel(data): #フロントから受け取ったデータを引数(data)に入れる
+    channel_id = data['channel_id'] # チャンネルIDを取得
+    join_room(f'channel_{channel_id}') #join_room関数を使用して、チャンネルIDに基づいてそのIDの部屋に入る
+    print(f'ユーザーがchannel {channel_id} に入りました') #コンソールに表示
+
+@socketio.on('leave_channel') # チャンネルから離れる
+def on_leave_channel(data):
+    channel_id = data['channel_id']
+    leave_room(f'channel_{channel_id}')
+    print(f'ユーザーがchannel {channel_id} を出ました')
+
+
+# エラーハンドラー
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('error/404.html'), 404
-
 
 @app.errorhandler(500)
 def internal_server_error(error):
     return render_template('error/500.html'), 500
 
-
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
-    
-
-
+    # SocketIOでアプリを起動
+    socketio.run(app, host="0.0.0.0", debug=True, allow_unsafe_werkzeug=True)

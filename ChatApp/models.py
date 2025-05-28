@@ -3,7 +3,7 @@ import pymysql           # MySQLデータベースに接続するためのモジ
 from util.DB import DB      # データベース接続のためのモジュール
 from datetime import datetime       # 日時を扱うためのモジュール
 import os                 # ファイルパスを扱うためのモジュール
-from werkzeug.utils import secure_filename    # ファイル名を安全な形式に変換するためのモジュール
+
 
 
 # 初期起動時にコネクションプールを作成し接続を確立
