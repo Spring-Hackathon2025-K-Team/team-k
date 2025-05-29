@@ -79,7 +79,7 @@ def signup_process():
             User.create(uid, name, email, password, is_admin)  # ユーザーを作成
             UserId = str(uid)   # ユーザーIDを文字列に変換
             session['uid'] = UserId # セッションにユーザーIDを保存
-            return redirect(url_for('channels_view'))
+            return redirect(url_for('login_view'))
     return redirect(url_for('signup_process'))
 
 

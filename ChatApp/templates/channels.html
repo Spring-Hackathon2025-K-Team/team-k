@@ -179,10 +179,6 @@
             {% endif %}
           </li>
           {% endfor %}
-          <!-- チャンネル名を編集する -->
-          {% if (not admin_status and current_channel.uid == uid) or admin_status %}
-          <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editChannelModal">編集</button>
-          {% endif %}
         </ul>
       </div>
       
@@ -290,35 +286,6 @@
         </div>
       </div>
     </div>
-
-    <!-- モーダル：チャンネル編集 -->
-    {% if current_channel %}
-    <div class="modal fade" id="editChannelModal" tabindex="-1" aria-labelledby="editChannelModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editChannelModalLabel">チャンネルを編集する</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-          </div>
-          <div class="modal-body">
-            <form method="POST" action="/channels/update/{{ current_channel.id }}">
-              <div class="mb-3">
-                <label for="channelTitle" class="form-label">チャンネル名</label>
-                <input type="text" class="form-control" id="channelTitle" name="channelTitle" value="{{ current_channel.name }}" required>
-              </div>
-              <div class="mb-3">
-                <label for="channelDescription" class="form-label">チャンネルの説明</label>
-                <input type="text" class="form-control" id="channelDescription" name="channelDescription" value="{{ current_channel.description }}">
-              </div>
-              <div class="text-center">
-                <button type="submit" class="btn btn-info text-white">更新</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
   </div>
 
 <script>
